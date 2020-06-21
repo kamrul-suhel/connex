@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 //    return $request->user();
 //});
 
-Route::prefix('v1')->group(function(){
+Route::middleware('api', 'service')
+    ->prefix('v1')->group(function(){
     Route::post('services', 'ServiceController@getService');
 });

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Request;
 
 class ServiceRequest extends FormRequest
 {
@@ -22,10 +23,40 @@ class ServiceRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(Request $request)
     {
-        return [
-            'serviceType' => 'required|in:service1,service2,service3',
+        // Check service type is exists or not.
+        if (!$request->has('serviceType')) {
+            return [
+                'serviceType' => 'required|in:serviceA,serviceB,serviceC',
+            ];
+        }
+        $validate = null;
+        switch ($request->serviceType) {
+            case 'serviceA':
+                $validate = $this->getValidationfieldForServiceA($request);
+                break;
+
+            case 'serviceB':
+                $validate = $this->getValidationfieldForServiceB($request);
+                break;
+
+            case 'serviceC':
+                $validate = $this->getValidationfieldForServiceC($request);
+        }
+
+        return $validate;
+    }
+
+    /**
+     * Validate field for Service A
+     * @param Request $request
+     * @return string[]
+     */
+    protected function getValidationfieldForServiceA(Request $request)
+    {
+        // If service A & campaign B then do not validate campaign data
+        $validateFields = [
             'name' => 'required|string',
             'phone' => 'required|min:11|numeric',
             'email' => 'required|email',
@@ -35,11 +66,66 @@ class ServiceRequest extends FormRequest
             'call_stats' => 'required|array',
             'call_stats.id' => 'required|integer',
             'call_stats.length' => 'required',
+            'call_stats.recording_url' => 'required|string'
+        ];
+
+        if (
+            $request->serviceType === 'serviceA' &&
+            $request->has('campaign') &&
+            (int)$request->campaign['id'] != 1516 // Campaign B
+        ) {
+            $validateFields['campaign'] = 'required|array';
+            $validateFields['campaign.id'] = 'required|integer'; // if database 'required|exists:campaigns,id
+            $validateFields['campaign.name'] = 'required|string';
+            $validateFields['campaign.description'] = 'required|string';
+        }
+
+        return $validateFields;
+    }
+
+    /**
+     * Validate field for Service B
+     * @param Request $request
+     * @return string[]
+     */
+    protected function getValidationfieldForServiceB(Request $request)
+    {
+        // If service B can receive only sales information
+        $validateFields = [
+            'query_type' => 'required|array',
+            'query_type.id' => 'required|integer',
+            'query_type.title' => 'required|string'
+        ];
+
+        return $validateFields;
+    }
+
+    /**
+     * Validate field for Service C
+     * @param Request $request
+     * @return string[]
+     */
+    protected function getValidationfieldForServiceC(Request $request)
+    {
+        // If service A & campaign B then do not validate campaign data
+        $validateFields = [
+            'name' => 'required|string',
+            'phone' => 'required|min:11|numeric',
+            'email' => 'required|email',
+            'campaign.description' => 'required|string',
+            'query_type' => 'required|array',
+            'query_type.id' => 'required|integer',
+            'query_type.title' => 'required|string',
+            'call_stats' => 'required|array',
+            'call_stats.id' => 'required|integer',
+            'call_stats.length' => 'required',
             'call_stats.recording_url' => 'required|string',
             'campaign' => 'required|array',
             'campaign.id' => 'required|integer', // if database 'required|exists:campaigns,id
-            'campaign.name' => 'required|string',
-            'campaign.description' => 'required|string'
+            'campaign.name' => 'required|string'
         ];
+
+        return $validateFields;
     }
+
 }

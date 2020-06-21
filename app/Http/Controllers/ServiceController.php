@@ -14,7 +14,32 @@ class ServiceController extends Controller
      * @param ServiceRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getService(ServiceRequest $request){
-        return $this->successResponse(['message' => 'Request sent.']);
+    public function getService(ServiceRequest $request)
+    {
+        switch ($request->serviceType) {
+            case 'serviceA':
+                $data = [
+                    'message' => 'Sent request into Microservice A',
+                    'payload' => $request->all()
+                ];
+                return $this->successResponse($data);
+
+            case 'serviceB':
+                $data = [
+                    'message' => 'Sent request into Microservice B',
+                    'payload' => $request->all()
+                ];
+                return $this->successResponse($data);
+
+            case 'serviceC':
+                $data = [
+                    'message' => 'Sent request into Microservice C',
+                    'payload' => $request->all()
+                ];
+                return $this->successResponse($data);
+
+            default:
+                return $this->errorResponse('Something went wrong.'); // Which is not reach
+        }
     }
 }
